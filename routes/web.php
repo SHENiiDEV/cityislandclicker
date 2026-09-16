@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\GameController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\NewsController;
@@ -14,6 +15,7 @@ Route::get('/terms', [LegalController::class, 'terms'])->name('legal.terms');
 Route::get('/privacy', [LegalController::class, 'privacy'])->name('legal.privacy');
 Route::get('/refunds', [LegalController::class, 'refunds'])->name('legal.refunds');
 Route::get('/cookies', [LegalController::class, 'cookies'])->name('legal.cookies');
+Route::get('/invoice/{orderId}', [InvoiceController::class, 'download'])->name('invoice.download');
 
 // News & Articles
 Route::get('/news', [NewsController::class, 'index'])->name('news.index');

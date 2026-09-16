@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Mail\TopUpReceiptMail;
+use App\Mail\WelcomeMayorMail;
+use App\Models\Transaction;
 use App\Models\Upgrade;
 use App\Models\User;
 use App\Services\GameSyncService;
@@ -193,5 +196,49 @@ class GameSystemTest extends TestCase
     {
         $this->get('/news')->assertStatus(200);
         $this->get('/news/patch-1-2-orion-spaceport-launch')->assertStatus(200);
+    }
+
+    public function test_invoice_pdf_generates_and_downloads_successfully(): void
+    {
+        $transaction = Transaction::create([
+            'user_id' => $this->user->id,
+            'order_id' => 'ORD-TEST12345',
+            'package_key' => 'starter_pack',
+            'amount_fiat' => 1.99,
+            'currency' => 'USD',
+            'gems_reward' => 100,
+            'status' => 'success',
+            'payment_gateway' => 'city_island_pay',
+            'payload' => ['package_name' => 'First Mayor Starter Kit'],
+            'paid_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->user)->get('/invoice/ORD-TEST12345');
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    public function test_welcome_mail_and_top_up_receipt_mail_render(): void
+    {
+        $welcomeMail = new WelcomeMayorMail($this->user);
+        $this->assertStringContainsString('Welcome', $welcomeMail->envelope()->subject);
+
+        $transaction = Transaction::create([
+            'user_id' => $this->user->id,
+            'order_id' => 'ORD-RECEIPT99',
+            'package_key' => 'mayor_vault',
+            'amount_fiat' => 4.99,
+            'currency' => 'USD',
+            'gems_reward' => 300,
+            'status' => 'success',
+            'payment_gateway' => 'city_island_pay',
+            'payload' => ['package_name' => "Mayor's Vault"],
+            'paid_at' => now(),
+        ]);
+
+        $receiptMail = new TopUpReceiptMail($transaction);
+        $this->assertStringContainsString('ORD-RECEIPT99', $receiptMail->envelope()->subject);
+        $attachments = $receiptMail->attachments();
+        $this->assertCount(1, $attachments);
     }
 }

@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\WelcomeMayorMail;
 use App\Models\User;
 use App\Services\CountryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -65,6 +68,13 @@ class RegisterController extends Controller
         ]);
 
         Auth::login($user);
+
+        // Send welcome email with starter pack info
+        try {
+            Mail::to($user->email)->send(new WelcomeMayorMail($user));
+        } catch (\Throwable $e) {
+            Log::warning('Welcome email failed to send: '.$e->getMessage());
+        }
 
         return redirect()->route('game.play');
     }

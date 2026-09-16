@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Mail\TopUpReceiptMail;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class PaymentService
@@ -160,6 +163,13 @@ class PaymentService
                 'gateway_data' => $gatewayData,
             ]);
             $transaction->save();
+
+            // Send receipt email with PDF invoice attachment
+            try {
+                Mail::to($user->email)->send(new TopUpReceiptMail($transaction));
+            } catch (\Throwable $e) {
+                Log::warning('Payment receipt email failed to send: '.$e->getMessage());
+            }
 
             return [
                 'success' => true,

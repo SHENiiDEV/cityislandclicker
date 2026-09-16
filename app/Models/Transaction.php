@@ -34,4 +34,24 @@ class Transaction extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function getTransactionIdAttribute(): string
+    {
+        return $this->order_id ?? ('TXN-'.str_pad($this->id, 8, '0', STR_PAD_LEFT));
+    }
+
+    public function getPackageNameAttribute(): string
+    {
+        return $this->payload['package_name'] ?? ($this->package_key ?? 'Virtual Island Top-Up');
+    }
+
+    public function getGemsCreditedAttribute(): int
+    {
+        return $this->gems_reward ?? 0;
+    }
+
+    public function getAmountCentsAttribute(): int
+    {
+        return (int) round(((float) $this->amount_fiat) * 100);
+    }
 }
